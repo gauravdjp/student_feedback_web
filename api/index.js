@@ -20,7 +20,7 @@ connectToDatabase().catch((err) => {
 });
 
 // Health & Database Connection API
-app.get('/api/health', async (req, res) => {
+app.get(['/api/health', '/health'], async (req, res) => {
   let isConnected = mongoose.connection.readyState === 1;
   if (!isConnected) {
     try {
@@ -39,8 +39,9 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Mount Routes
+// Mount Routes on all possible path variants
 app.use('/api/feedback', feedbackRoutes);
+app.use('/feedback', feedbackRoutes);
 
 // Fallback to index.html for client-side single page navigation
 app.get('*', (req, res) => {

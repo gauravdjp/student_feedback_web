@@ -2,7 +2,19 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
+    {
+      "source": "/api/feedback/:match*",
+      "destination": "/api/feedback"
+    },
+    {
+      "source": "/api/feedback",
+      "destination": "/api/feedback"
+    },
+    {
+      "source": "/api/:match*",
       "destination": "/api/index.js"
     }
   ]

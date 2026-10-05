@@ -3,19 +3,19 @@
   "rewrites": [
     {
       "source": "/api/health",
-      "destination": "/api/health"
+      "destination": "/api/health.js"
     },
     {
-      "source": "/api/feedback/:match*",
-      "destination": "/api/feedback"
+      "source": "/api/feedback/stats",
+      "destination": "/api/feedback.js?stats=true"
+    },
+    {
+      "source": "/api/feedback/:id",
+      "destination": "/api/feedback.js?id=:id"
     },
     {
       "source": "/api/feedback",
-      "destination": "/api/feedback"
-    },
-    {
-      "source": "/api/:match*",
-      "destination": "/api/index.js"
+      "destination": "/api/feedback.js"
     }
   ]
 }

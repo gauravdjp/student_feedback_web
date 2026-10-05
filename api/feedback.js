@@ -1,17 +1,266 @@
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const feedbackRoutes = require('./routes/feedback');
+const { connectToDatabase, mongoose } = require('./db');
+const Feedback = require('./models/Feedback');
 
-const app = express();
+function sendJson(res, statusCode, data) {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(data));
+}
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+// In-memory fallback
+let inMemoryFeedbacks = [
+  {
+    _id: 'seed-001',
+    studentName: 'Aarav Sharma',
+    studentId: 'CS2023014',
+    studentEmail: 'aarav.sharma@campus.edu',
+    course: 'Computer Science & Engineering',
+    subject: 'Data Structures & Algorithms',
+    teacherName: 'Dr. Ramesh Kulkarni',
+    semester: 'Semester 4',
+    academicYear: '2025-2026',
+    rating: 5,
+    ratings: { content: 5, delivery: 5, labSupport: 4, availability: 5 },
+    comments: 'Excellent teaching methodology with practical examples. The DSA coding sessions and problem-solving workshops were very engaging!',
+    suggestions: 'More real-world coding case studies in competitive programming would be wonderful.',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  },
+  {
+    _id: 'seed-002',
+    studentName: 'Priya Patel',
+    studentId: 'IT2023089',
+    studentEmail: 'priya.patel@campus.edu',
+    course: 'Information Technology',
+    subject: 'Database Management Systems',
+    teacherName: 'Prof. Ananya Sen',
+    semester: 'Semester 4',
+    academicYear: '2025-2026',
+    rating: 4,
+    ratings: { content: 4, delivery: 4, labSupport: 5, availability: 4 },
+    comments: 'The SQL and MongoDB hands-on lab sessions were super helpful. The professor clarifies all doubts promptly.',
+    suggestions: 'Provide sample question papers before mid-term exams.',
+    createdAt: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    _id: 'seed-003',
+    studentName: 'Rohan Verma',
+    studentId: 'EC2023045',
+    studentEmail: 'rohan.v@campus.edu',
+    course: 'Electronics & Communication',
+    subject: 'Microprocessors & Microcontrollers',
+    teacherName: 'Dr. Vikramaditya Rao',
+    semester: 'Semester 5',
+    academicYear: '2025-2026',
+    rating: 5,
+    ratings: { content: 5, delivery: 4, labSupport: 5, availability: 5 },
+    comments: 'Very thorough explanation of assembly architecture and hardware interfacing.',
+    suggestions: 'Extend the lab hours for hardware kit experiments.',
+    createdAt: new Date().toISOString()
+  }
+];
 
-// Mount feedback routes on all possible subpaths so Vercel can never 404
-app.use('/api/feedback', feedbackRoutes);
-app.use('/feedback', feedbackRoutes);
-app.use('/', feedbackRoutes);
+module.exports = async (req, res) => {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-module.exports = app;
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 200;
+    return res.end();
+  }
+
+  // Connect to MongoDB
+  try {
+    await connectToDatabase();
+  } catch (err) {
+    console.warn('MongoDB connection attempt in function:', err.message);
+  }
+
+  const isConnected = mongoose.connection.readyState === 1;
+  const url = req.url || '';
+  const query = req.query || {};
+
+  // -------------------------------------------------------------
+  // GET /api/feedback/stats OR /api/feedback?stats=true
+  // -------------------------------------------------------------
+  if (req.method === 'GET' && (url.includes('stats') || query.stats)) {
+    let list = [];
+    if (isConnected) {
+      try {
+        list = await Feedback.find().lean();
+      } catch (e) {
+        list = inMemoryFeedbacks;
+      }
+    } else {
+      list = inMemoryFeedbacks;
+    }
+
+    const total = list.length;
+    const avgRating = total > 0 
+      ? (list.reduce((acc, curr) => acc + (Number(curr.rating) || 0), 0) / total).toFixed(1) 
+      : '0.0';
+
+    const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    const courseCounts = {};
+
+    list.forEach(item => {
+      const r = Math.round(Number(item.rating)) || 0;
+      if (ratingCounts[r] !== undefined) ratingCounts[r]++;
+      if (item.course) {
+        courseCounts[item.course] = (courseCounts[item.course] || 0) + 1;
+      }
+    });
+
+    return sendJson(res, 200, {
+      total,
+      avgRating: parseFloat(avgRating),
+      ratingDistribution: ratingCounts,
+      courseDistribution: courseCounts,
+      databaseStatus: isConnected ? 'Connected (MongoDB Atlas)' : 'Standby / Local Storage'
+    });
+  }
+
+  // -------------------------------------------------------------
+  // GET /api/feedback (Fetch all feedbacks with optional filters)
+  // -------------------------------------------------------------
+  if (req.method === 'GET') {
+    const { course, rating, search } = query;
+
+    if (isConnected) {
+      try {
+        const mongoQuery = {};
+        if (course) mongoQuery.course = course;
+        if (rating) mongoQuery.rating = Number(rating);
+        if (search) {
+          mongoQuery.$or = [
+            { studentName: { $regex: search, $options: 'i' } },
+            { studentId: { $regex: search, $options: 'i' } },
+            { teacherName: { $regex: search, $options: 'i' } },
+            { course: { $regex: search, $options: 'i' } },
+            { subject: { $regex: search, $options: 'i' } }
+          ];
+        }
+        const feedbacks = await Feedback.find(mongoQuery).sort({ createdAt: -1 }).lean();
+        return sendJson(res, 200, {
+          source: 'MongoDB',
+          count: feedbacks.length,
+          data: feedbacks
+        });
+      } catch (err) {
+        console.warn('MongoDB query fallback:', err.message);
+      }
+    }
+
+    // In-memory fallback
+    let list = [...inMemoryFeedbacks];
+    if (course) list = list.filter(item => item.course === course);
+    if (rating) list = list.filter(item => item.rating === Number(rating));
+    if (search) {
+      const s = search.toLowerCase();
+      list = list.filter(item =>
+        (item.studentName && item.studentName.toLowerCase().includes(s)) ||
+        (item.studentId && item.studentId.toLowerCase().includes(s)) ||
+        (item.teacherName && item.teacherName.toLowerCase().includes(s)) ||
+        (item.course && item.course.toLowerCase().includes(s)) ||
+        (item.subject && item.subject.toLowerCase().includes(s))
+      );
+    }
+
+    return sendJson(res, 200, {
+      source: isConnected ? 'MongoDB' : 'Standby / Local Storage',
+      count: list.length,
+      data: list
+    });
+  }
+
+  // -------------------------------------------------------------
+  // POST /api/feedback (Submit new feedback)
+  // -------------------------------------------------------------
+  if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {}
+    }
+    body = body || {};
+
+    const {
+      studentName,
+      studentId,
+      studentEmail,
+      course,
+      subject,
+      teacherName,
+      semester,
+      academicYear,
+      rating,
+      ratings,
+      comments,
+      suggestions
+    } = body;
+
+    if (!studentName || !studentId || !course || !teacherName || !rating) {
+      return sendJson(res, 400, {
+        message: 'Please provide all required fields: studentName, studentId, course, teacherName, rating.'
+      });
+    }
+
+    const feedbackData = {
+      studentName: studentName.trim(),
+      studentId: studentId.trim(),
+      studentEmail: (studentEmail || '').trim(),
+      course: course.trim(),
+      subject: (subject || '').trim(),
+      teacherName: teacherName.trim(),
+      semester: semester || 'Current Semester',
+      academicYear: academicYear || '2025-2026',
+      rating: Number(rating),
+      ratings: ratings || { content: rating, delivery: rating, labSupport: rating, availability: rating },
+      comments: (comments || '').trim(),
+      suggestions: (suggestions || '').trim(),
+      createdAt: new Date()
+    };
+
+    if (isConnected) {
+      try {
+        const feedback = new Feedback(feedbackData);
+        const saved = await feedback.save();
+        return sendJson(res, 201, saved);
+      } catch (err) {
+        console.error('MongoDB save error in serverless function:', err.message);
+      }
+    }
+
+    // In-memory fallback
+    const newItem = {
+      _id: 'fb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      ...feedbackData,
+      createdAt: new Date().toISOString()
+    };
+    inMemoryFeedbacks.unshift(newItem);
+    return sendJson(res, 201, newItem);
+  }
+
+  // -------------------------------------------------------------
+  // DELETE /api/feedback (Delete feedback by ID)
+  // -------------------------------------------------------------
+  if (req.method === 'DELETE') {
+    const id = query.id || url.split('/').pop();
+
+    if (isConnected && id) {
+      try {
+        await Feedback.findByIdAndDelete(id);
+      } catch (e) {
+        console.warn('MongoDB delete warning:', e.message);
+      }
+    }
+
+    inMemoryFeedbacks = inMemoryFeedbacks.filter(item => item._id !== id);
+    return sendJson(res, 200, { message: 'Feedback successfully deleted', id });
+  }
+
+  sendJson(res, 405, { message: 'Method Not Allowed' });
+};

@@ -1,0 +1,19 @@
+{
+  "name": "student-feedback-system",
+  "version": "1.0.0",
+  "description": "Student Feedback System with Angular, Forms, Express and MongoDB for local and Vercel deployment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "mongoose": "^7.8.12"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

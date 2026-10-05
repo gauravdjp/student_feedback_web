@@ -1,0 +1,32 @@
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="nav-icon">🎓</span>
+    <h1>Student Feedback System</h1>
+  </div>
+  <div class="nav-tabs">
+    <button
+      [class.active]="activeTab === 'form'"
+      (click)="activeTab = 'form'"
+    >
+      📝 Submit Feedback
+    </button>
+    <button
+      [class.active]="activeTab === 'list'"
+      (click)="activeTab = 'list'"
+    >
+      📋 View Feedback
+    </button>
+  </div>
+</nav>
+
+<!-- Content -->
+<main class="main-content">
+  <app-feedback-form *ngIf="activeTab === 'form'"></app-feedback-form>
+  <app-feedback-list *ngIf="activeTab === 'list'"></app-feedback-list>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>© 2026 Student Feedback System — Built with Angular & MongoDB</p>
+</footer>

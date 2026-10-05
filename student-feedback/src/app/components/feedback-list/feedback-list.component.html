@@ -1,0 +1,69 @@
+<div class="list-container">
+  <div class="list-header">
+    <h2>📋 All Feedback</h2>
+    <button class="btn-refresh" (click)="loadFeedback()">🔄 Refresh</button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading feedback...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && feedbackList.length === 0 && !errorMessage" class="empty-state">
+    <p>📭 No feedback submitted yet.</p>
+    <p class="hint">Be the first to submit your feedback!</p>
+  </div>
+
+  <!-- Feedback Cards -->
+  <div class="feedback-grid">
+    <div *ngFor="let item of feedbackList" class="feedback-card">
+      <div class="card-header">
+        <div class="student-info">
+          <h3>{{ item.studentName }}</h3>
+          <span class="student-id">ID: {{ item.studentId }}</span>
+        </div>
+        <button class="btn-delete" (click)="deleteFeedback(item._id!)" title="Delete">
+          🗑️
+        </button>
+      </div>
+
+      <div class="card-details">
+        <div class="detail-row">
+          <span class="detail-label">📚 Course:</span>
+          <span class="detail-value">{{ item.course }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">👨‍🏫 Teacher:</span>
+          <span class="detail-value">{{ item.teacherName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">⭐ Rating:</span>
+          <span class="detail-value stars" [ngClass]="getRatingClass(item.rating)">
+            {{ getStars(item.rating) }}
+          </span>
+        </div>
+      </div>
+
+      <div *ngIf="item.comments" class="card-section">
+        <h4>💬 Comments</h4>
+        <p>{{ item.comments }}</p>
+      </div>
+
+      <div *ngIf="item.suggestions" class="card-section">
+        <h4>💡 Suggestions</h4>
+        <p>{{ item.suggestions }}</p>
+      </div>
+
+      <div class="card-footer">
+        <span class="timestamp">🕐 {{ formatDate(item.createdAt) }}</span>
+      </div>
+    </div>
+  </div>
+</div>

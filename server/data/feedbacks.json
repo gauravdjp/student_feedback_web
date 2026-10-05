@@ -1,0 +1,65 @@
+[
+  {
+    "_id": "seed-001",
+    "studentName": "Aarav Sharma",
+    "studentId": "CS2023014",
+    "studentEmail": "aarav.sharma@campus.edu",
+    "course": "Computer Science & Engineering",
+    "subject": "Data Structures & Algorithms",
+    "teacherName": "Dr. Ramesh Kulkarni",
+    "semester": "Semester 4",
+    "academicYear": "2025-2026",
+    "rating": 5,
+    "ratings": {
+      "content": 5,
+      "delivery": 5,
+      "labSupport": 4,
+      "availability": 5
+    },
+    "comments": "Excellent teaching methodology with practical examples. The DSA coding sessions and problem-solving workshops were very engaging!",
+    "suggestions": "More real-world coding case studies in competitive programming would be wonderful.",
+    "createdAt": "2026-10-03T15:10:24.162Z"
+  },
+  {
+    "_id": "seed-002",
+    "studentName": "Priya Patel",
+    "studentId": "IT2023089",
+    "studentEmail": "priya.patel@campus.edu",
+    "course": "Information Technology",
+    "subject": "Database Management Systems",
+    "teacherName": "Prof. Ananya Sen",
+    "semester": "Semester 4",
+    "academicYear": "2025-2026",
+    "rating": 4,
+    "ratings": {
+      "content": 4,
+      "delivery": 4,
+      "labSupport": 5,
+      "availability": 4
+    },
+    "comments": "The SQL and MongoDB hands-on lab sessions were super helpful. The professor clarifies all doubts promptly.",
+    "suggestions": "Provide sample question papers before mid-term exams.",
+    "createdAt": "2026-10-04T15:10:24.380Z"
+  },
+  {
+    "_id": "seed-003",
+    "studentName": "Rohan Verma",
+    "studentId": "EC2023045",
+    "studentEmail": "rohan.v@campus.edu",
+    "course": "Electronics & Communication",
+    "subject": "Microprocessors & Microcontrollers",
+    "teacherName": "Dr. Vikramaditya Rao",
+    "semester": "Semester 5",
+    "academicYear": "2025-2026",
+    "rating": 5,
+    "ratings": {
+      "content": 5,
+      "delivery": 4,
+      "labSupport": 5,
+      "availability": 5
+    },
+    "comments": "Very thorough explanation of assembly architecture and hardware interfacing.",
+    "suggestions": "Extend the lab hours for hardware kit experiments.",
+    "createdAt": "2026-10-05T15:10:24.380Z"
+  }
+]
